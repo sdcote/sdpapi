@@ -4,6 +4,11 @@ import coyote.commons.log.Log;
 import coyote.commons.vault.Vault;
 import coyote.commons.vault.VaultBuilder;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 /**
  * Static helper methods for working with ServiceDesk Plus.
  */
@@ -166,5 +171,30 @@ public class SDP {
             Log.error("Failed to retrieve access token", e);
         }
         return retval;
+    }
+
+
+    /**
+     * Helper method to recursively deep copy a Map<String, Object>.
+     */
+    public static Map<String, Object> deepCopyMap(Map<String, Object> original) {
+        Map<String, Object> copy = new HashMap<>();
+
+        for (Map.Entry<String, Object> entry : original.entrySet()) {
+            Object value = entry.getValue();
+
+            if (value instanceof Map) {
+                // Recursively copy nested maps
+                copy.put(entry.getKey(), deepCopyMap((Map<String, Object>) value));
+            } else if (value instanceof List) {
+                // Copy nested lists
+                copy.put(entry.getKey(), new ArrayList<>((List<?>) value));
+            } else {
+                // For Strings, Primitives (Integer, Long, etc.), these are
+                // effectively immutable, so sharing the reference is safe.
+                copy.put(entry.getKey(), value);
+            }
+        }
+        return copy;
     }
 }

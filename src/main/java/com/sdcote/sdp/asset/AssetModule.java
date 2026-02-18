@@ -2,6 +2,7 @@ package com.sdcote.sdp.asset;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sdcote.sdp.ClientCredentials;
+import com.sdcote.sdp.ListInfo;
 import com.sdcote.sdp.SDP;
 import coyote.commons.FileUtil;
 import coyote.commons.StringUtil;
@@ -27,19 +28,57 @@ public class AssetModule {
     private AssetModule() {
     }
 
+    /**
+     * Retrieve only one page of data.
+     * @param credentials
+     * @param listInfo
+     * @return
+     */
+    public static List<Asset> retrieveAssets(ClientCredentials credentials, ListInfo listInfo) {
+        return getAssets(credentials, listInfo);
+    }
+
+
+    /**
+     * Retrieve all data, regardless of rowcount.
+     * @param credentials
+     * @param ListInfo
+     * @return
+     */
+    public static List<Asset> retrieveAllAssets(ClientCredentials credentials, ListInfo ListInfo) {
+        List<Asset> retval = new ArrayList<>();
+        ListInfo myListInfo = new ListInfo(ListInfo); // make a copy that we can change
+
+        while(true){
+            List<Asset> pageAssets = getAssets(credentials, myListInfo);
+            if (pageAssets == null || pageAssets.isEmpty()) {
+                break;
+            }
+            retval.addAll(pageAssets);
+
+            // Check for End of Data
+            if (pageAssets.size() < myListInfo.getRowCount()) {
+                break; // Fewer records than requested means this is the last page
+            }
+            // Advance to Next Page
+            myListInfo.incrementPage();
+        }
+
+        return retval;
+    }
+
 
     /**
      *
      * @param credentials The client credentials.
      * @return a list of Asset objects, or empty if errors occurred. Never returns null.
      */
-    public static List<Asset> listAssets(ClientCredentials credentials) {
+    private static List<Asset> getAssets(ClientCredentials credentials, ListInfo listInfo) {
         List<Asset> retval = new ArrayList<>();
 
         // Get the access token for our web service calls.
         String accessToken = SDP.getAccessToken(credentials);
         Log.debug(String.format("AssetModule listAssets token: %s", accessToken));
-
 
         if (StringUtil.isNotBlank(accessToken)) {
             // Make the web service call
@@ -47,9 +86,8 @@ public class AssetModule {
                     .connectTimeout(Duration.ofSeconds(10))
                     .build();
 
-            // The API expects the token in the format: Zoho-oauthtoken <token>
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(SDP.getServiceUrl() + ENDPOINT))
+                    .uri(generateRequestUri(listInfo))
                     .header("Authorization", "Zoho-oauthtoken " + accessToken)
                     .header("Accept", "application/vnd.manageengine.sdp.v3+json")
                     .GET()
@@ -79,6 +117,26 @@ public class AssetModule {
         }
 
         return retval;
+    }
+
+
+    /**
+     * Generate a URI from the service url, the endpoint and the provided list information.
+     *
+     * @param listInfo The list information for the request.
+     * @return a URI suitable for the HttpRequest.
+     */
+    private static URI generateRequestUri(ListInfo listInfo) {
+        StringBuilder b = new StringBuilder();
+        b.append(SDP.getServiceUrl());
+        b.append(ENDPOINT);
+
+        if (listInfo != null) {
+            b.append("?");
+            b.append(listInfo.toQueryParam());
+        }
+
+        return URI.create(b.toString());
     }
 
 
