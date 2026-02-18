@@ -11,3 +11,42 @@ This API includes a mechanism to help both Zoho and you prevent mistaking your a
 ### Secrets Vault
 
 This uses the Coyote Commons MiniVault (via JVault) to protect your OAuth client identifier, client secret, and refresh token with AES-256 encryption. No need to hard-code your confidential information, place it in unprotected configuration files, or pass it as arguments with every execution.
+
+
+# To Do List
+
+These are items that should be addressed.
+
+## Searching (In Progress)
+Update `ListInfo` to support search criteria. See [Search Criteria](https://www.manageengine.com/products/service-desk/sdpod-v3-api/getting-started/search-criteria.html)
+
+## Fields Required (In Progress)
+Update `ListInfo` to support `fields_required`. See [Input Data](https://www.manageengine.com/products/service-desk/sdpod-v3-api/getting-started/input-data.html)
+
+## Response Parsing (Low Priority)
+There is additional data in the response that is not accessible to the current retrieval design.
+```json
+{
+  "assets": [
+ ],
+  "response_status": [
+    {
+      "status_code": 2000,
+      "status": "success"
+    }
+  ],
+  "list_info": {
+    "has_more_rows": true,
+    "sort_field": "name",
+    "row_count": 10
+  }
+}
+```
+It may be advantageous to redesign the web service calls to return this information.
+
+## Total Count (Low Priority)
+Update `ListInfo` to support `get_total_count`. See [Input Data](https://www.manageengine.com/products/service-desk/sdpod-v3-api/getting-started/input-data.html)
+
+## Entity Attributes (Low Priority)
+Input data might need to be its own class, holding `entity` and `list_info`. It is not yet clear how `entity` might be used. See [Input Data](https://www.manageengine.com/products/service-desk/sdpod-v3-api/getting-started/input-data.html)
+

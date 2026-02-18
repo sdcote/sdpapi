@@ -7,7 +7,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -25,7 +27,8 @@ public class ListInfo implements Cloneable {
     private String sortField;
     private String sortOrder; // "asc" or "desc"
     private Map<String, Object> searchFields;
-
+    private SearchCriteria searchCriteria;
+    private List<String> fieldsRequired;
 
     public ListInfo() {
     }
@@ -51,6 +54,8 @@ public class ListInfo implements Cloneable {
         this.startIndex = other.startIndex;
         this.sortField = other.sortField;
         this.sortOrder = other.sortOrder;
+        this.searchCriteria = other.searchCriteria;
+        this.fieldsRequired = other.fieldsRequired;
 
         // Perform deep copy of the Map
         if (other.searchFields != null) {
@@ -134,7 +139,6 @@ public class ListInfo implements Cloneable {
     public Map<String, Object> getSearchFields() {
         return searchFields;
     }
-
     public void setSearchFields(Map<String, Object> searchFields) {
         this.searchFields = searchFields;
     }
@@ -143,4 +147,21 @@ public class ListInfo implements Cloneable {
         if (this.searchFields == null) this.searchFields = new HashMap<>();
         this.searchFields.put(key, value);
     }
+
+    @JsonProperty("search_criteria")
+    public SearchCriteria getSearchCriteria() { return searchCriteria; }
+    public void setSearchCriteria(SearchCriteria searchCriteria) { this.searchCriteria = searchCriteria; }
+
+
+    /**
+     * Helper to easily set required fields.
+     * usage: listInfo.setFieldsRequired("id", "name", "site");
+     */
+    public void setFieldsRequired(String... fields) {
+        this.fieldsRequired = Arrays.asList(fields);
+    }
+
+    @JsonProperty("fields_required")
+    public List<String> getFieldsRequired() { return fieldsRequired; }
+    public void setFieldsRequired(List<String> fieldsRequired) { this.fieldsRequired = fieldsRequired; }
 }
