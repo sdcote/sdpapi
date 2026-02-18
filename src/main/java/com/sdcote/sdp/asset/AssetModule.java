@@ -56,6 +56,7 @@ public class AssetModule {
                     .build();
 
             try {
+                SDP.throttle();
                 HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
                 if (response.statusCode() == 200) {
