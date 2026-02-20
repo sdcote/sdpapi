@@ -23,7 +23,7 @@ Update `ListInfo` to support search criteria. See [Search Criteria](https://www.
 ## Fields Required (In Progress)
 Update `ListInfo` to support `fields_required`. See [Input Data](https://www.manageengine.com/products/service-desk/sdpod-v3-api/getting-started/input-data.html)
 
-## Response Parsing (Low Priority)
+## Response Parsing (In Progress)
 There is additional data in the response that is not accessible to the current retrieval design.
 ```json
 {
@@ -43,6 +43,9 @@ There is additional data in the response that is not accessible to the current r
 }
 ```
 It may be advantageous to redesign the web service calls to return this information.
+
+**Update:** The `ApiResponse` class makes this data available if the `AssetModule.callApi()` method is called.
+
 
 ## Total Count (Low Priority)
 Update `ListInfo` to support `get_total_count`. See [Input Data](https://www.manageengine.com/products/service-desk/sdpod-v3-api/getting-started/input-data.html)

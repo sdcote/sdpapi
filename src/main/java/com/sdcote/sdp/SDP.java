@@ -14,20 +14,15 @@ import java.util.Map;
  */
 public class SDP {
     private static final long TOKEN_EXPIRY_WINDOW = 10_000L;
-    private static final int MAX_CALLS = 30;
-    private static final long WINDOW_MS = 60_000; // 1 Minute
 
-    // Circular buffer to store the timestamps of the last 'MAX_CALLS' requests.
-    // Initialized to 0, representing "far in the past".
-    private static final long[] callTimestamps = new long[MAX_CALLS];
-    // Lock object for synchronization
-    private static final Object lock = new Object();
-    // Pointer to the oldest timestamp slot in the buffer
-    private static int headIndex = 0;
     private static String OAUTH_URL = "https://accounts.zoho.com/oauth/v2";
     private static String SERVICE_URL = "https://sdpondemand.manageengine.com/api/v3";
-
     private static OAuthAccessTokenTracker refreshTokenTracker = new OAuthAccessTokenTracker(OAUTH_URL, TOKEN_EXPIRY_WINDOW);
+
+    private static final int MAX_CALLS_PER_MINUTE = 20;
+    private static final long INTERVAL_MS = 60000L / MAX_CALLS_PER_MINUTE; // 2000ms
+    private static long lastCallTime = 0;
+
 
     /**
      * @return the secrets vault for this project
@@ -51,68 +46,25 @@ public class SDP {
 
 
     /**
-     * Blocks the calling thread if the rate limit has been exceeded.
-     *
-     * <p>All web service calls chack this method to ensure that this API does
-     * not trigger any flogs at the ServiceDesk data center. Their API is
-     * designed for web applications, not high speed automation components, to
-     * this API must operate at the rate of a standard, browser-based user.</p>
-     *
-     * <p>Calling this method causes the thread of execution to block if too
-     * many calls have already been made to the ServiceDesk API. This returns
-     * immediately if the rate limit allows.</p>
-     *
-     * <p>This class implements a thread-safe, sliding window rate limiter
-     * using a circular buffer (ring buffer). It ensures that no more than 30
-     * calls are made within any rolling 60-minute window (implied 60 seconds
-     * based on "per minute").</p>
-     *
-     * <p>It uses a "reservation" strategy:<ol>
-     * <li>Threads acquire a lock to check the timestamp of the 30th previous call.</li>
-     * <li>If that call was less than 60 seconds ago, the thread calculates the exact wait time needed.</li>
-     * <li>The thread reserves the slot by updating the timestamp to the future time when it will execute.</li>
-     * <li>The lock is released, and the thread sleeps for the calculated duration (if any) before returning control to the caller.</li>
-     * </ol></p>
+     * Blocks the current thread to ensure a strict, even interval between API calls.
+     * Must be called immediately before executing the HTTP request.
      */
-    public static void throttle() {
-        long waitDuration = 0;
+    public static synchronized void throttle()  {
+        long now = System.currentTimeMillis();
+        long timeSinceLastCall = now - lastCallTime;
 
-        synchronized (lock) {
-            long now = System.currentTimeMillis();
-
-            // Look at the timestamp of the oldest call in our window (the one leaving the window soonest)
-            long oldestCallTime = callTimestamps[headIndex];
-
-            // Calculate when that slot will become available again
-            long availabilityTime = oldestCallTime + WINDOW_MS;
-
-            if (now < availabilityTime) {
-                // We are moving too fast. We must wait until the slot opens.
-                waitDuration = availabilityTime - now;
-
-                // Reserve this slot for the future time when we wake up.
-                // This prevents other threads from "stealing" the slot while we sleep.
-                callTimestamps[headIndex] = availabilityTime;
-            } else {
-                // Slot is ready. Mark it with the current time.
-                callTimestamps[headIndex] = now;
-            }
-
-            // Move the pointer to the next oldest slot (circular increment)
-            headIndex = (headIndex + 1) % MAX_CALLS;
-        }
-
-        // Sleep outside the synchronized block to allow other threads to reserve their own slots concurrently.
-        if (waitDuration > 0) {
+        if (timeSinceLastCall < INTERVAL_MS) {
+            long sleepTime = INTERVAL_MS - timeSinceLastCall;
             try {
-                Thread.sleep(waitDuration);
+                Thread.sleep(sleepTime);
             } catch (InterruptedException e) {
-                // Restore interrupt status if interrupted during sleep
-                Thread.currentThread().interrupt();
+                throw new RuntimeException("Throttle interupted",e);
             }
         }
-    }
 
+        // Record the time after the sleep completes
+        lastCallTime = System.currentTimeMillis();
+    }
 
     /**
      * @return the URL of the OAuth token service
