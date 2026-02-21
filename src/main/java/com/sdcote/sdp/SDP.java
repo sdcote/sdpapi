@@ -24,6 +24,7 @@ import java.util.Map;
  */
 public class SDP {
 
+    public static final String RESULTS_FIELD_TAG = "resultfield";
     private static final String RESPONSE_STATUS_FIELD = "response_status";
     private static final String LISTINFO_FIELD = "list_info";
 

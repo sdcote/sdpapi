@@ -322,4 +322,14 @@ class SearchCriteriaTest {
         System.out.println(frames);
     }
 
+    @Test
+    void parse9() {
+        String json = " \"search_criteria\": {\n" +
+                "      \"field\": \"last_updated_time\",\n" +
+                "      \"condition\": \"is\",\n" +
+                "      \"value\": \"$(LAST_30_DAYS)\"\n" +
+                "    },";
+        List<DataFrame> frames = JSONMarshaler.marshal(json);
+        System.out.println(frames);
+    }
 }

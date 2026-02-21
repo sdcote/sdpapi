@@ -29,16 +29,14 @@ import java.util.List;
  * <li>clientId - The OAuth client identifier to connect with the API.</li>
  * <li>clientSecret - The OAuth client secret to connect with the API.</li>
  * <li>clientToken - The OAuth refresh token to obtain access tokens for the client.</li>
+ * <li>endpoint - The endpoint to add to the URL (e.g., /asset, /request, /cmdb, etc.)</li>
+ * <li>resultField - The name of the results field (e.g., asset)</li>
  * <li>batch - how many records to read at a time.</li>
  * <li>flatten - determines if nested dataframes should be flattened to a single dataframe with dotted-name notation. (default=false)</li>
  * <li>limit - the maximum amount to read...useful during development.</li>
  * </ul>
  */
-public class SdpAssetReader extends AbstractFrameReader {
-    /** The API endpoint for the assets service. */
-    private static final String ENDPOINT = "/assets";
-    /** The field in the API Response containing our data. */
-    private static final String RESULT_FIELD = "assets";
+public class ServiceDeskApiReader extends AbstractFrameReader {
     /** The current batch of records received. */
     private final List<DataFrame> currentPage = new ArrayList<>();
     /** The query parameters for the API call. */
@@ -83,7 +81,17 @@ public class SdpAssetReader extends AbstractFrameReader {
             }
         }
 
-        // Defaults, maybe make configurable if there is benefit to do so
+        if (!configuration.containsIgnoreCase(ConfigTag.ENDPOINT)) {
+            context.setError(getClass().getSimpleName()+": Required attribute '"+ConfigTag.ENDPOINT+"' is missing");
+        }
+
+        if (!configuration.containsIgnoreCase(SDP.RESULTS_FIELD_TAG)) {
+            context.setError(getClass().getSimpleName()+": Required attribute '"+SDP.RESULTS_FIELD_TAG+"' is missing");
+        }
+
+
+
+            // Defaults, maybe make configurable if there is benefit to do so
         listInfo.setSortField("name");
         listInfo.setSortOrder(ListInfo.ASCENDING);
 
@@ -155,7 +163,7 @@ public class SdpAssetReader extends AbstractFrameReader {
 
         try {
             // Get the next batch of records
-            ApiResponse response = SDP.callApi(clientCredentials, ENDPOINT, listInfo, RESULT_FIELD);
+            ApiResponse response = SDP.callApi(clientCredentials, getEndPoint(), listInfo, getResultsField());
 
             // add them to the current page
             for (final DataFrame frame : response.getResults()) {
@@ -192,6 +200,22 @@ public class SdpAssetReader extends AbstractFrameReader {
             context.setState("Read Error");
         }
 
+    }
+
+
+    /**
+     * @return the name of the field that contains our query results.
+     */
+    private String getResultsField() {
+        return configuration.getString(SDP.RESULTS_FIELD_TAG);
+    }
+
+
+    /**
+     * @return the endpoint path to add to the request URI to make our call
+     */
+    private String getEndPoint() {
+        return configuration.getString(ConfigTag.ENDPOINT);
     }
 
 
