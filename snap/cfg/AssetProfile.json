@@ -1,0 +1,40 @@
+{
+  "RtwJob":{
+
+    "Vault": { "filename": "[#$sys.app.home#][#$sys.file.separator#]sdp.vault", "password": "[#$env.vault.password#]" },
+
+    "Preprocess": {
+    },
+
+    "Reader": {
+      "class": "ServiceDeskApiReader",
+      "clientId": "[#Vault.get(AssetAutomation,Username)#]",
+      "clientSecret": "[#Vault.get(AssetAutomation,Password)#]",
+      "clientToken": "[#Vault.get(AssetAutomation,Token)#]",
+      "endpoint": "/assets",
+      "resultField": "assets",
+      "batch": 10,
+      "flatten": false,
+      "limit": 10
+    },
+
+    "Filter": {
+    },
+
+    "Mapper" : {
+    },
+
+    "Listener": {"DataProfiler": { "target": "[#$sys.user.dir#][#$sys.file.separator#]dataprofile.txt"}},
+
+    "Writer": { "class": "JsonWriter", "target": "[#$sys.user.dir#][#$sys.file.separator#]assets.json" },
+    "Writer": { "class": "ConsoleWriter", "format": "json" },
+
+    "Logging": {
+      "ConsoleAppender": { "target": "STDERR", "categories": "error, fatal, warn" },
+      "ConsoleAppender": { "target": "STDOUT", "categories": "info, notice, debug" },
+      "FileAppender": {  "target": "debug.log", "categories": "debug, trace" }
+    }
+
+  }
+
+}
