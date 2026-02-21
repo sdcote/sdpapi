@@ -1,118 +1,107 @@
 package com.sdcote.sdp;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import coyote.commons.dataframe.DataFrame;
+import coyote.commons.dataframe.marshal.JSONMarshaler;
+import coyote.commons.dataframe.marshal.MarshalException;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Represents a node in the 'search_criteria' tree.
- * Can represent a LEAF (field + condition + value) or a BRANCH (logical_operator + children).
+ *
+ * {@see https://www.manageengine.com/products/service-desk/sdpod-v3-api/getting-started/search-criteria.html}
  */
-@JsonInclude(JsonInclude.Include.NON_NULL)
 public class SearchCriteria {
-
-    // --- Leaf Node Fields ---
-    private String field;
-    private String condition;
-    private Object value;       // For single value operations (is, contains)
-    private List<Object> values; // For multi-value operations (is_in, not_in)
-
-    // --- Branch Node Fields ---
-    private String logicalOperator; // "and" or "or"
-    private List<SearchCriteria> children;
-
-
-    public SearchCriteria() {
-    }
+    private static final String FIELD_TAG = "field";
+    private static final String CONDITION_TAG = "condition";
+    private static final String VALUE_TAG = "value";
+    private static final String OPERATOR_TAG = "operator";
+    private static final String CHILDREN_TAG = "children";
+    private DataFrame dataFrame = new DataFrame();
 
     /**
-     * Convenience constructor for a simple condition.
+     * Constructor from a dataframe. This simply wraps the given frame.
      *
-     * @param field     The API field name (e.g., "name", "site.name")
-     * @param condition The operator (e.g., "is", "contains", "starts_with", "is_in")
-     * @param value     The value to check against
+     * @param dataFrame the dataframe to wrap.
      */
-    public SearchCriteria(String field, String condition, Object value) {
-        this.field = field;
-        this.condition = condition;
-        if (value instanceof List) {
-            this.values = (List<Object>) value;
-        } else {
-            this.value = value;
-        }
+    public SearchCriteria(DataFrame dataFrame) {
+        this.dataFrame = dataFrame;
     }
 
     /**
-     * Convenience constructor for a logical group (AND/OR).
+     * Constructure from JSON. Wraps the dataframe represented by the JSON
+     *
+     * @param json the JSON object to wrap.
+     * @throws IllegalArgumentException if there were problems parsing the JSON into a DataFrame
      */
-    public SearchCriteria(String logicalOperator) {
-        this.logicalOperator = logicalOperator;
-        this.children = new ArrayList<>();
-    }
-
-
-    public SearchCriteria addChild(SearchCriteria child) {
-        if (this.children == null) {
-            this.children = new ArrayList<>();
+    public SearchCriteria(String json) throws IllegalArgumentException {
+        try {
+            List<DataFrame> frames = JSONMarshaler.marshal(json);
+            dataFrame = frames.get(0);
+        } catch (MarshalException e) {
+            throw new IllegalArgumentException("JSON Marshaler error.", e);
         }
-        this.children.add(child);
-        return this; // For chaining
+    }
+
+    public SearchCriteria(String field, String condition, String value) {
+        setField(field);
+        setCondition(condition);
+        setValue(value);
     }
 
 
-    @JsonProperty("field")
     public String getField() {
-        return field;
+        return dataFrame.getAsString(FIELD_TAG);
     }
 
-    public void setField(String field) {
-        this.field = field;
+    public SearchCriteria setField(String fieldName) {
+        dataFrame.put(FIELD_TAG, fieldName);
+        return this;
     }
 
-    @JsonProperty("condition")
     public String getCondition() {
-        return condition;
+        return dataFrame.getAsString(CONDITION_TAG);
     }
 
-    public void setCondition(String condition) {
-        this.condition = condition;
+    public SearchCriteria setCondition(String condition) {
+        dataFrame.put(CONDITION_TAG, condition);
+        return this;
     }
 
-    @JsonProperty("value")
-    public Object getValue() {
-        return value;
+    public String getValue() {
+        return dataFrame.getAsString(VALUE_TAG);
     }
 
-    public void setValue(Object value) {
-        this.value = value;
+    public SearchCriteria setValue(String value) {
+        dataFrame.put(VALUE_TAG, value);
+        return this;
     }
 
-    @JsonProperty("values")
-    public List<Object> getValues() {
-        return values;
-    }
-
-    public void setValues(List<Object> values) {
-        this.values = values;
-    }
-
-    @JsonProperty("logical_operator")
     public String getLogicalOperator() {
-        return logicalOperator;
+        return dataFrame.getAsString(OPERATOR_TAG);
     }
 
-    public void setLogicalOperator(String logicalOperator) {
-        this.logicalOperator = logicalOperator;
+    public SearchCriteria setLogicalOperator(String operator) {
+        dataFrame.put(OPERATOR_TAG, operator);
+        return this;
     }
 
-    @JsonProperty("children")
-    public List<SearchCriteria> getChildren() {
-        return children;
+    public void addChild(SearchCriteria child) {
+        if (!dataFrame.contains(CHILDREN_TAG)) {
+            DataFrame array = new DataFrame();
+            array.add(child);
+            dataFrame.put(CHILDREN_TAG, array);
+        } else {
+            DataFrame children = (DataFrame) dataFrame.getObject(CHILDREN_TAG);
+            children.add(child);
+            dataFrame.put(CHILDREN_TAG, children);
+        }
     }
 
-    public void setChildren(List<SearchCriteria> children) {
-        this.children = children;
+    public DataFrame getDataFrame() { return dataFrame; }
+
+    @Override
+    public String toString() {
+        return JSONMarshaler.marshal(dataFrame);
     }
+
 }

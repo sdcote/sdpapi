@@ -1,167 +1,160 @@
 package com.sdcote.sdp;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import coyote.commons.ArrayUtil;
+import coyote.commons.dataframe.DataField;
+import coyote.commons.dataframe.DataFrame;
+import coyote.commons.dataframe.DataFrameException;
+import coyote.commons.dataframe.marshal.JSONMarshaler;
+import coyote.commons.dataframe.marshal.MarshalException;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
- * Helper class to generate the 'list_info' query parameter for ServiceDesk Plus V3 API.
- * Handles pagination (row_count, start_index), sorting, and search filters.
+ *
+ * {@see https://www.manageengine.com/products/service-desk/sdpod-v3-api/getting-started/input-data.html}
  */
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public class ListInfo implements Cloneable {
-
+public class ListInfo {
     public static final String ASCENDING = "asc";
     public static final String DECENDING = "desc";
 
-    private int rowCount = 50; // Default to 50
-    private int startIndex = 1; // Default to 1 (1-based index)
-    private String sortField;
-    private String sortOrder; // "asc" or "desc"
-    private Map<String, Object> searchFields;
-    private SearchCriteria searchCriteria;
-    private List<String> fieldsRequired;
+    private static final String ROW_COUNT_TAG = "row_count";             // number of rows to be returned(maximum row_count = 100)
+    private static final String START_INDEX_TAG = "start_index";         // starting row index
+    private static final String SORT_FIELD_TAG = "sort_field";           // "fieldName"
+    private static final String SORT_ORDER_TAG = "sort_order";           // “asc/desc”,
+    private static final String FIELDS_REQUIRED_TAG = "fields_required"; // [ "list of fields required" ]
+    private static final String SEARCH_CRITERIA_TAG = "search_criteria"; //  Refer search criteria object given in the attributes of List ListInfo(For performing advanced search)
+    private static final String GET_TOTAL_COUNT_TAG = "get_total_count"; // boolean (by default it will be false)
+    private static final String HAS_MORE_ROWS_TAG = "has_more_rows";     // boolean (will be returned with the response)
+    private static final String TOTAL_COUNT_TAG = "total_count";         // count (will be returned with the response only)
 
+
+    private DataFrame dataFrame = new DataFrame();
+
+    /**
+     * Default constructor.
+     */
     public ListInfo() {
     }
 
-    public ListInfo(int rowCount, int startIndex) {
-        this.rowCount = rowCount;
-        this.startIndex = startIndex;
+    /**
+     * Constructor from a dataframe. This simply wraps the given frame.
+     *
+     * @param dataFrame the dataframe to wrap.
+     */
+    public ListInfo(DataFrame dataFrame) {
+        this.dataFrame = dataFrame;
     }
 
 
     /**
-     * Copy Constructor: Performs a deep copy of the searchFields map.
+     * Constructure from JSON. Wraps the dataframe represented by the JSON
      *
-     * @param other The original ListInfo instance to copy from.
+     * @param json the JSON object to wrap.
+     * @throws IllegalArgumentException if there were problems parsing the JSON into a DataFrame
      */
-    public ListInfo(ListInfo other) {
-        if (other == null) {
-            throw new IllegalArgumentException("Source ListInfo cannot be null");
-        }
-
-        // Copy primitives and immutable Strings
-        this.rowCount = other.rowCount;
-        this.startIndex = other.startIndex;
-        this.sortField = other.sortField;
-        this.sortOrder = other.sortOrder;
-        this.searchCriteria = other.searchCriteria;
-        this.fieldsRequired = other.fieldsRequired;
-
-        // Perform deep copy of the Map
-        if (other.searchFields != null) {
-            this.searchFields = SDP.deepCopyMap(other.searchFields);
-        } else {
-            this.searchFields = new HashMap<>();
-        }
-    }
-
-    /**
-     * Serializes this object to a JSON string and URL-encodes it for use in a
-     * GET request query parameter.
-     *
-     * @return encoded string (e.g., "%7B%22row_count%22%3A100...%7D")
-     */
-    public String toQueryParam() {
+    public ListInfo(String json) throws IllegalArgumentException {
         try {
-            ObjectMapper mapper = new ObjectMapper();
-
-            // 1. Generate the inner JSON
-            String innerJson = mapper.writeValueAsString(this);
-
-            // 2. Wrap it in the required root key "list_info"
-            String wrappedJson = "{\"list_info\":" + innerJson + "}";
-
-            // 3. URL Encode the entire JSON string
-            String encodedJson = URLEncoder.encode(wrappedJson, StandardCharsets.UTF_8);
-
-            // 4. Return the full query parameter key-value pair
-            return "input_data=" + encodedJson;
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException("Failed to serialize ListInfo to JSON", e);
+            List<DataFrame> frames = JSONMarshaler.marshal(json);
+            dataFrame = frames.get(0);
+        } catch (MarshalException e) {
+            throw new IllegalArgumentException("JSON Marshaler error.", e);
         }
     }
 
-    /**
-     * Increment the start index to the next page of data.
-     */
-    public void incrementPage() {
-        startIndex += rowCount;
-    }
 
-    @JsonProperty("row_count")
     public int getRowCount() {
-        return rowCount;
+        try {
+            return dataFrame.getAsInt(ROW_COUNT_TAG);
+        } catch (DataFrameException e) {
+            return 0;
+        }
     }
 
-    /** How many rows are to be retrieved at a time (default=50)*/
-    public void setRowCount(int rowCount) {
-        this.rowCount = rowCount;
+
+    public ListInfo setRowCount(int rowcount) {
+        dataFrame.put(ROW_COUNT_TAG, rowcount);
+        return this;
     }
 
-    @JsonProperty("start_index")
     public int getStartIndex() {
-        return startIndex;
+        try {
+            return dataFrame.getAsInt(START_INDEX_TAG);
+        } catch (DataFrameException e) {
+            return 1;
+        }
     }
 
-    public void setStartIndex(int startIndex) {
-        this.startIndex = startIndex;
+    public ListInfo setStartIndex(int index) {
+        dataFrame.put(START_INDEX_TAG, index);
+        return this;
     }
 
-    @JsonProperty("sort_field")
     public String getSortField() {
-        return sortField;
+        return dataFrame.getAsString(SORT_FIELD_TAG);
     }
 
-    public void setSortField(String sortField) {
-        this.sortField = sortField;
+    public ListInfo setSortField(String fieldName) {
+        dataFrame.put(SORT_FIELD_TAG, fieldName);
+        return this;
     }
 
-    @JsonProperty("sort_order")
     public String getSortOrder() {
-        return sortOrder;
+        return dataFrame.getAsString(SORT_ORDER_TAG);
     }
 
-    public void setSortOrder(String sortOrder) {
-        this.sortOrder = sortOrder;
+    public ListInfo setSortOrder(String fieldName) {
+        dataFrame.put(SORT_ORDER_TAG, fieldName);
+        return this;
     }
 
-    @JsonProperty("search_fields")
-    public Map<String, Object> getSearchFields() {
-        return searchFields;
-    }
-    public void setSearchFields(Map<String, Object> searchFields) {
-        this.searchFields = searchFields;
-    }
-
-    public void putSearchField(String key, String value) {
-        if (this.searchFields == null) this.searchFields = new HashMap<>();
-        this.searchFields.put(key, value);
-    }
-
-    @JsonProperty("search_criteria")
-    public SearchCriteria getSearchCriteria() { return searchCriteria; }
-    public void setSearchCriteria(SearchCriteria searchCriteria) { this.searchCriteria = searchCriteria; }
-
-
-    /**
-     * Helper to easily set required fields.
-     * usage: listInfo.setFieldsRequired("id", "name", "site");
-     */
-    public void setFieldsRequired(String... fields) {
-        this.fieldsRequired = Arrays.asList(fields);
+    public String[] getFieldsRequired() {
+        String[] retval = ArrayUtil.EMPTY_STRING_ARRAY;
+        if (dataFrame.containsKey(FIELDS_REQUIRED_TAG)) {
+            DataField field = dataFrame.getField(FIELDS_REQUIRED_TAG);
+            if (field.isArray()) {
+                DataFrame frame = (DataFrame) field.getObjectValue();
+                List<String> array = new ArrayList<>();
+                for (DataField df : frame.getFields()) {
+                    array.add(df.getStringValue());
+                }
+                retval = array.toArray(new String[0]);
+            } else {
+                retval = new String[1];
+                retval[0] = field.getStringValue();
+            }
+        }
+        return retval;
     }
 
-    @JsonProperty("fields_required")
-    public List<String> getFieldsRequired() { return fieldsRequired; }
-    public void setFieldsRequired(List<String> fieldsRequired) { this.fieldsRequired = fieldsRequired; }
+    public ListInfo setFieldsRequired(String[] fieldNames) {
+        dataFrame.put(FIELDS_REQUIRED_TAG, fieldNames);
+        return this;
+    }
+
+    public SearchCriteria getSearchCriteria() {
+        SearchCriteria retval = null;
+        if (dataFrame.contains(SEARCH_CRITERIA_TAG)) {
+            DataField field = dataFrame.getField(SEARCH_CRITERIA_TAG);
+            if (field.isFrame()) {
+                DataFrame frame = (DataFrame) field.getObjectValue();
+                retval = new SearchCriteria(frame);
+            }
+        }
+        return retval;
+    }
+
+    public ListInfo setSearchCriteria(SearchCriteria searchCriteria) {
+        dataFrame.put(SEARCH_CRITERIA_TAG, searchCriteria.getDataFrame());
+        return this;
+    }
+
+
+    public DataFrame getDataFrame() { return dataFrame; }
+
+    @Override
+    public String toString() {
+        return JSONMarshaler.marshal(dataFrame);
+    }
+
 }

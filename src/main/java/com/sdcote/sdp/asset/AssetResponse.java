@@ -40,7 +40,7 @@ public class AssetResponse {
         this.listInfo = listInfo;
     }
 
-    // --- Inner Class for the Response List Info ---
+    // --- Inner Class for the Response List ListInfo ---
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class ResponseListInfo {
         private boolean hasMoreRows;

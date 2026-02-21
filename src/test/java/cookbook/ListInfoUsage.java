@@ -1,24 +1,24 @@
 package cookbook;
 
-import com.sdcote.sdp.ListInfo;
+import com.sdcote.sdp.OldListInfo;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class ListInfoUsage {
     public static void main(String[] args) {
-        // 1. Create the ListInfo object
-        ListInfo listInfo = new ListInfo(100, 1);
-        listInfo.setSortField("name");
-        listInfo.setSortOrder(ListInfo.ASCENDING);
+        // 1. Create the OldListInfo object
+        OldListInfo oldListInfo = new OldListInfo(100, 1);
+        oldListInfo.setSortField("name");
+        oldListInfo.setSortOrder(OldListInfo.ASCENDING);
 
         // Optional: Add filtering
         Map<String, Object> search = new HashMap<>();
         search.put("name", "MacBook");
-        listInfo.setSearchFields(search);
+        oldListInfo.setSearchFields(search);
 
         // 2. Generate the encoded query parameter
-        String encodedParam = listInfo.toQueryParam();
+        String encodedParam = oldListInfo.toQueryParam();
 
         // 3. Build the URL
         String url = "https://sdpondemand.manageengine.com/api/v3/assets?list_info=" + encodedParam;

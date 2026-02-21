@@ -3,8 +3,9 @@ package coyote.commons.rtw.reader;
 import com.sdcote.sdp.ApiResponse;
 import com.sdcote.sdp.ClientCredentials;
 import com.sdcote.sdp.ListInfo;
-import com.sdcote.sdp.asset.AssetModule;
+import com.sdcote.sdp.SDP;
 import coyote.commons.DataFrameUtil;
+import coyote.commons.StringUtil;
 import coyote.commons.dataframe.DataFrame;
 import coyote.commons.dataframe.DataFrameException;
 import coyote.commons.log.Log;
@@ -34,25 +35,19 @@ import java.util.List;
  * </ul>
  */
 public class SdpAssetReader extends AbstractFrameReader {
-    /**
-     * The current batch of records received.
-     */
+    /** The API endpoint for the assets service. */
+    private static final String ENDPOINT = "/assets";
+    /** The field in the API Response containing our data. */
+    private static final String RESULT_FIELD = "assets";
+    /** The current batch of records received. */
     private final List<DataFrame> currentPage = new ArrayList<>();
-    /**
-     * The query parameters for the API call.
-     */
+    /** The query parameters for the API call. */
     private final ListInfo listInfo = new ListInfo();
-    /**
-     * The calculated size of the expected number of records to be returned with the present query.
-     */
+    /** The calculated size of the expected number of records to be returned with the present query. */
     private int resultSize = -1;
-    /**
-     * The current row index, what has been read by the reader (not the batch).
-     */
+    /** The current row index, what has been read by the reader (not the batch). */
     private int currentRow = 0;
-    /**
-     * The client credentials used for authenticating with the API endpoint.
-     */
+    /** The client credentials used for authenticating with the API endpoint. */
     private ClientCredentials clientCredentials = null;
 
 
@@ -77,10 +72,9 @@ public class SdpAssetReader extends AbstractFrameReader {
         String id = Template.resolve(configuration.getString("clientid"), context.getSymbols());
         String secret = Template.resolve(configuration.getString("clientsecret"), context.getSymbols());
         String token = Template.resolve(configuration.getString("clienttoken"), context.getSymbols());
-        Log.info(String.format("Opening SDP Asset %s:%s - %s", id, secret, token));
         clientCredentials = new ClientCredentials(id, secret, token);
 
-        // Set our batch size (ListInfo.rowCount)
+        // Set our batch size (OldListInfo.rowCount)
         if (configuration.containsIgnoreCase(ConfigTag.BATCH)) {
             int batchSize = getInteger(ConfigTag.BATCH);
             if (batchSize > 0) {
@@ -121,6 +115,7 @@ public class SdpAssetReader extends AbstractFrameReader {
 
             // if we still have no records...assume a premature EOF condition
             if (currentPage.size() == 0) {
+                if (StringUtil.isNotBlank(context.getErrorMessage())) Log.error(context.getErrorMessage());
                 context.setError("Unexpected end of data: expected " + resultSize + " read in " + currentRow);
 
                 // make sure we register as EOF
@@ -155,19 +150,17 @@ public class SdpAssetReader extends AbstractFrameReader {
      * Retrieve the next batch of records into our buffer.
      */
     private void nextPage(TransactionContext context) {
-
         listInfo.setStartIndex(currentRow);
         Log.trace(String.format("loading page - %s", listInfo));
 
         try {
-
             // Get the next batch of records
-            ApiResponse response = AssetModule.callApi(clientCredentials, listInfo);
+            ApiResponse response = SDP.callApi(clientCredentials, ENDPOINT, listInfo, RESULT_FIELD);
 
             // add them to the current page
-            for (final DataFrame record : response.getResults()) {
-                if (isFlattening()) currentPage.add(DataFrameUtil.flatten(record));
-                else currentPage.add(record);
+            for (final DataFrame frame : response.getResults()) {
+                if (isFlattening()) currentPage.add(DataFrameUtil.flatten(frame));
+                else currentPage.add(frame);
             }
 
             // Try to detect the result size. NOTE: This is not foolproof, we may

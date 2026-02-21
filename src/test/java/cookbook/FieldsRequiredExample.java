@@ -1,7 +1,7 @@
 package cookbook;
 
 import com.sdcote.sdp.ClientCredentials;
-import com.sdcote.sdp.ListInfo;
+import com.sdcote.sdp.OldListInfo;
 import com.sdcote.sdp.SDP;
 import com.sdcote.sdp.asset.Asset;
 import com.sdcote.sdp.asset.AssetModule;
@@ -21,13 +21,13 @@ public class FieldsRequiredExample {
         VaultEntry vaultEntry = SDP.getVault().getEntry("Asset Automation");
         ClientCredentials clientCreds = new ClientCredentials(vaultEntry.get("Username"), vaultEntry.get("Password"), vaultEntry.get("Token"));
 
-        ListInfo listInfo = new ListInfo(5, 1);
+        OldListInfo oldListInfo = new OldListInfo(5, 1);
 
         // Request ONLY the ID and Name
-        listInfo.setFieldsRequired("id", "name");
+        oldListInfo.setFieldsRequired("id", "name");
 
         // Use the AssetModule class to access the data (just one page of data)
-        List<Asset> assets = AssetModule.retrieveAssets(clientCreds, listInfo);
+        List<Asset> assets = AssetModule.retrieveAssets(clientCreds, oldListInfo);
 
         /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         When you use fields_required, any field you don't request will be null in your Java objects.

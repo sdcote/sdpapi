@@ -18,10 +18,10 @@ This uses the Coyote Commons MiniVault (via JVault) to protect your OAuth client
 These are items that should be addressed.
 
 ## Searching (In Progress)
-Update `ListInfo` to support search criteria. See [Search Criteria](https://www.manageengine.com/products/service-desk/sdpod-v3-api/getting-started/search-criteria.html)
+Update `OldListInfo` to support search searchCriteria. See [Search Criteria](https://www.manageengine.com/products/service-desk/sdpod-v3-api/getting-started/search-searchCriteria.html)
 
 ## Fields Required (In Progress)
-Update `ListInfo` to support `fields_required`. See [Input Data](https://www.manageengine.com/products/service-desk/sdpod-v3-api/getting-started/input-data.html)
+Update `OldListInfo` to support `fields_required`. See [Input Data](https://www.manageengine.com/products/service-desk/sdpod-v3-api/getting-started/input-data.html)
 
 ## Response Parsing (In Progress)
 There is additional data in the response that is not accessible to the current retrieval design.
@@ -48,7 +48,7 @@ It may be advantageous to redesign the web service calls to return this informat
 
 
 ## Total Count (Low Priority)
-Update `ListInfo` to support `get_total_count`. See [Input Data](https://www.manageengine.com/products/service-desk/sdpod-v3-api/getting-started/input-data.html)
+Update `OldListInfo` to support `get_total_count`. See [Input Data](https://www.manageengine.com/products/service-desk/sdpod-v3-api/getting-started/input-data.html)
 
 ## Entity Attributes (Low Priority)
 Input data might need to be its own class, holding `entity` and `list_info`. It is not yet clear how `entity` might be used. See [Input Data](https://www.manageengine.com/products/service-desk/sdpod-v3-api/getting-started/input-data.html)
