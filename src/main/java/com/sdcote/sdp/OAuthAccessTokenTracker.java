@@ -22,6 +22,8 @@ import java.util.stream.Collectors;
 public class OAuthAccessTokenTracker {
 
     private final String tokenProviderUrl;
+
+    /** The number of seconds before the access token expiration we want the token refresh to occur.*/
     private final long expiryWindowSeconds;
     private final HttpClient httpClient;
 
@@ -90,6 +92,14 @@ public class OAuthAccessTokenTracker {
     }
 
 
+    /**
+     * Perform a refresh of the access token.
+     *
+     * @param clientId THe identifier of the client to refresh
+     * @param data the data containing the refresh token and client secret
+     * @throws IOException if network operations fail
+     * @throws InterruptedException if a timeout occurs.
+     */
     private void refreshAccessToken(String clientId, ClientTokenData data) throws IOException, InterruptedException {
         if (data.refreshToken == null) {
             throw new IllegalStateException("No refresh token available for client: " + clientId);
@@ -150,23 +160,9 @@ public class OAuthAccessTokenTracker {
     }
 
 
-    private String executePost(String path, String body) throws IOException, InterruptedException {
-
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(tokenProviderUrl))
-                .header("Content-Type", "application/x-www-form-urlencoded")
-                .POST(HttpRequest.BodyPublishers.ofString(body))
-                .build();
-
-        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
-        if (response.statusCode() != 200) {
-            throw new IOException("OAuth request failed with status " + response.statusCode() + ": " + response.body());
-        }
-        return response.body();
-    }
-
-    // Simple helper to extract values from JSON strings
+    /**
+     * Simple helper to extract values from JSON strings
+     */
     private String extractJsonValue(String json, String key) {
         if (json == null) return null;
 

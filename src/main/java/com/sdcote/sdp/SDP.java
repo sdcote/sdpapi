@@ -13,14 +13,16 @@ import java.util.Map;
  * Static helper methods for working with ServiceDesk Plus.
  */
 public class SDP {
-    private static final long TOKEN_EXPIRY_WINDOW = 10_000L;
+    /** The number of seconds before the access token expiration we want the token refresh to occur.*/
+    private static final long TOKEN_EXPIRY_WINDOW = 60L;
 
     private static String OAUTH_URL = "https://accounts.zoho.com/oauth/v2";
     private static String SERVICE_URL = "https://sdpondemand.manageengine.com/api/v3";
     private static OAuthAccessTokenTracker refreshTokenTracker = new OAuthAccessTokenTracker(OAUTH_URL, TOKEN_EXPIRY_WINDOW);
 
-    private static final int MAX_CALLS_PER_MINUTE = 20;
-    private static final long INTERVAL_MS = 60000L / MAX_CALLS_PER_MINUTE; // 2000ms
+    // Throttling attributes
+    private static final int MAX_CALLS_PER_MINUTE = 10;
+    private static final long INTERVAL_MS = 60000L / MAX_CALLS_PER_MINUTE;
     private static long lastCallTime = 0;
 
 
@@ -66,6 +68,7 @@ public class SDP {
         lastCallTime = System.currentTimeMillis();
     }
 
+
     /**
      * @return the URL of the OAuth token service
      */
@@ -110,11 +113,13 @@ public class SDP {
     }
 
 
-    public static void registerClient(ClientCredentials clientCredentials) {
-        refreshTokenTracker.registerClient(clientCredentials);
-    }
-
-
+    /**
+     * Request an OAuth access token for the given client.
+     *
+     * @param clientCredentials THe credentials representing the client (client ID, secret and refresh token)
+     *
+     * @return an OAuth access token for making requests to the API.
+     */
     public static String getAccessToken(ClientCredentials clientCredentials) {
         String retval = null;
         try {
@@ -149,4 +154,5 @@ public class SDP {
         }
         return copy;
     }
+
 }

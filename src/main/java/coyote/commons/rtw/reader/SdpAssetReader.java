@@ -18,17 +18,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * Reads assets from ServiceDesk Plus.
  *
  * <p>This is placed in the {@code coyote.commons.rtw.reader} namespace to make
  * the configuration file look cleaner. RTW Jobs look in their own namespace by
  * default if the configuration attribute is not a fully-qualified name.</p>
  *
  * <p>Arguments currently supported:<ul>
- * <li>clientId - The OAuth client identifier to connect with the API</li>
- * <li>clientSecret - The OAuth client secret to connect with the API</li>
+ * <li>clientId - The OAuth client identifier to connect with the API.</li>
+ * <li>clientSecret - The OAuth client secret to connect with the API.</li>
  * <li>clientToken - The OAuth refresh token to obtain access tokens for the client.</li>
- * <li>batch - how many records to read at a time</li>
- * <li>limit - the maximum amount to read...useful during development</li>
+ * <li>batch - how many records to read at a time.</li>
+ * <li>flatten - determines if nested dataframes should be flattened to a single dataframe with dotted-name notation. (default=false)</li>
+ * <li>limit - the maximum amount to read...useful during development.</li>
  * </ul>
  */
 public class SdpAssetReader extends AbstractFrameReader {
@@ -52,6 +54,7 @@ public class SdpAssetReader extends AbstractFrameReader {
      * The client credentials used for authenticating with the API endpoint.
      */
     private ClientCredentials clientCredentials = null;
+
 
     /**
      * All components are initialized through the {@code open(TransformContext)} method.
@@ -163,7 +166,8 @@ public class SdpAssetReader extends AbstractFrameReader {
 
             // add them to the current page
             for (final DataFrame record : response.getResults()) {
-                currentPage.add(DataFrameUtil.flatten(record));
+                if (isFlattening()) currentPage.add(DataFrameUtil.flatten(record));
+                else currentPage.add(record);
             }
 
             // Try to detect the result size. NOTE: This is not foolproof, we may
@@ -197,6 +201,18 @@ public class SdpAssetReader extends AbstractFrameReader {
 
     }
 
+
+    /**
+     * @return true if the reader is to flatten data into dotted-name notation,
+     * false (default) to keep the dataframe nesting.
+     */
+    private boolean isFlattening() {
+        if (configuration.containsIgnoreCase(ConfigTag.FLATTEN)) {
+            return configuration.getBoolean(ConfigTag.FLATTEN);
+        } else return false;
+    }
+
+
     /**
      * @return the number of records to be retrieved at a time from the source.
      */
@@ -207,6 +223,7 @@ public class SdpAssetReader extends AbstractFrameReader {
             return 0;
         }
     }
+
 
     /**
      * @return true if there are no more records to be read, false to keep
@@ -220,6 +237,7 @@ public class SdpAssetReader extends AbstractFrameReader {
             return getReadLimit() > 0 && currentRow >= getReadLimit();
     }
 
+
     /**
      * Terminate processing and clean up resources.
      *
@@ -230,4 +248,5 @@ public class SdpAssetReader extends AbstractFrameReader {
         Log.debug("Closing -------------------------------------------");
         super.close();
     }
+
 }
