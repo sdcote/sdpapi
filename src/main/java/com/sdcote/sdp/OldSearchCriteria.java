@@ -1,7 +1,5 @@
 package com.sdcote.sdp;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,7 +8,6 @@ import java.util.List;
  * Represents a node in the 'search_criteria' tree.
  * Can represent a LEAF (field + condition + value) or a BRANCH (logical_operator + children).
  */
-@JsonInclude(JsonInclude.Include.NON_NULL)
 public class OldSearchCriteria {
 
     // --- Leaf Node Fields ---
@@ -62,7 +59,6 @@ public class OldSearchCriteria {
     }
 
 
-    @JsonProperty("field")
     public String getField() {
         return field;
     }
@@ -71,7 +67,6 @@ public class OldSearchCriteria {
         this.field = field;
     }
 
-    @JsonProperty("condition")
     public String getCondition() {
         return condition;
     }
@@ -80,7 +75,6 @@ public class OldSearchCriteria {
         this.condition = condition;
     }
 
-    @JsonProperty("value")
     public Object getValue() {
         return value;
     }
@@ -89,7 +83,6 @@ public class OldSearchCriteria {
         this.value = value;
     }
 
-    @JsonProperty("values")
     public List<Object> getValues() {
         return values;
     }
@@ -98,7 +91,6 @@ public class OldSearchCriteria {
         this.values = values;
     }
 
-    @JsonProperty("logical_operator")
     public String getLogicalOperator() {
         return logicalOperator;
     }
@@ -107,7 +99,6 @@ public class OldSearchCriteria {
         this.logicalOperator = logicalOperator;
     }
 
-    @JsonProperty("children")
     public List<OldSearchCriteria> getChildren() {
         return children;
     }

@@ -88,11 +88,11 @@ public class SearchCriteria {
     public void addChild(SearchCriteria child) {
         if (!dataFrame.contains(CHILDREN_TAG)) {
             DataFrame array = new DataFrame();
-            array.add(child);
+            array.add(child.getDataFrame());
             dataFrame.put(CHILDREN_TAG, array);
         } else {
             DataFrame children = (DataFrame) dataFrame.getObject(CHILDREN_TAG);
-            children.add(child);
+            children.add(child.getDataFrame());
             dataFrame.put(CHILDREN_TAG, children);
         }
     }
