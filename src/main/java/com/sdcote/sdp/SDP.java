@@ -25,6 +25,8 @@ import java.util.Map;
 public class SDP {
 
     public static final String RESULTS_FIELD_TAG = "resultfield";
+    public static final String SEARCH_CRITERIA_TAG = "searchcriteria";
+    public static final String FIELDS_REQUIRED_TAG = "fieldsrequired";
     private static final String RESPONSE_STATUS_FIELD = "response_status";
     private static final String LISTINFO_FIELD = "list_info";
 

@@ -1,11 +1,9 @@
 package coyote.commons.rtw.reader;
 
-import com.sdcote.sdp.ApiResponse;
-import com.sdcote.sdp.ClientCredentials;
-import com.sdcote.sdp.ListInfo;
-import com.sdcote.sdp.SDP;
+import com.sdcote.sdp.*;
 import coyote.commons.DataFrameUtil;
 import coyote.commons.StringUtil;
+import coyote.commons.dataframe.DataField;
 import coyote.commons.dataframe.DataFrame;
 import coyote.commons.dataframe.DataFrameException;
 import coyote.commons.log.Log;
@@ -37,15 +35,25 @@ import java.util.List;
  * </ul>
  */
 public class ServiceDeskApiReader extends AbstractFrameReader {
-    /** The current batch of records received. */
+    /**
+     * The current batch of records received.
+     */
     private final List<DataFrame> currentPage = new ArrayList<>();
-    /** The query parameters for the API call. */
+    /**
+     * The query parameters for the API call.
+     */
     private final ListInfo listInfo = new ListInfo();
-    /** The calculated size of the expected number of records to be returned with the present query. */
+    /**
+     * The calculated size of the expected number of records to be returned with the present query.
+     */
     private int resultSize = -1;
-    /** The current row index, what has been read by the reader (not the batch). */
+    /**
+     * The current row index, what has been read by the reader (not the batch).
+     */
     private int currentRow = 0;
-    /** The client credentials used for authenticating with the API endpoint. */
+    /**
+     * The client credentials used for authenticating with the API endpoint.
+     */
     private ClientCredentials clientCredentials = null;
 
 
@@ -72,7 +80,7 @@ public class ServiceDeskApiReader extends AbstractFrameReader {
         String token = Template.resolve(configuration.getString("clienttoken"), context.getSymbols());
         clientCredentials = new ClientCredentials(id, secret, token);
 
-        // Set our batch size (OldListInfo.rowCount)
+        // Set our batch size (ListInfo.rowCount)
         if (configuration.containsIgnoreCase(ConfigTag.BATCH)) {
             int batchSize = getInteger(ConfigTag.BATCH);
             if (batchSize > 0) {
@@ -82,16 +90,41 @@ public class ServiceDeskApiReader extends AbstractFrameReader {
         }
 
         if (!configuration.containsIgnoreCase(ConfigTag.ENDPOINT)) {
-            context.setError(getClass().getSimpleName()+": Required attribute '"+ConfigTag.ENDPOINT+"' is missing");
+            context.setError(getClass().getSimpleName() + ": Required attribute '" + ConfigTag.ENDPOINT + "' is missing");
+            return;
         }
 
         if (!configuration.containsIgnoreCase(SDP.RESULTS_FIELD_TAG)) {
-            context.setError(getClass().getSimpleName()+": Required attribute '"+SDP.RESULTS_FIELD_TAG+"' is missing");
+            context.setError(getClass().getSimpleName() + ": Required attribute '" + SDP.RESULTS_FIELD_TAG + "' is missing");
+            return;
         }
 
+        // If there is a search criteria field, use the JSON to create search criteria and add it to the list info
+        if (configuration.containsIgnoreCase(SDP.SEARCH_CRITERIA_TAG)) {
+            String json = configuration.getString(SDP.SEARCH_CRITERIA_TAG);
+            try {
+                SearchCriteria searchCriteria = new SearchCriteria(Template.resolve(json, context.getSymbols()));
+                listInfo.setSearchCriteria(searchCriteria);
+            } catch (IllegalArgumentException e) {
+                context.setError(getClass().getSimpleName() + ": Invalid search criteria: " + e.getMessage());
+                return;
+            }
+        }
 
+        if(configuration.containsIgnoreCase(SDP.FIELDS_REQUIRED_TAG)) {
+            DataField field = configuration.getFieldIgnoreCase(SDP.FIELDS_REQUIRED_TAG);
+            if(field != null && field.isFrame()) {
+                List<String> requiredFields = new ArrayList<>();
+                for(DataField dataField: ((DataFrame)field.getObjectValue()).getFields()) {
+                    requiredFields.add(dataField.getStringValue());
+                }
+                if( !requiredFields.isEmpty() ) {
+                    listInfo.setFieldsRequired(requiredFields.toArray(new String[0]));
+                }
+            }
+        }
 
-            // Defaults, maybe make configurable if there is benefit to do so
+        // Defaults, maybe make configurable if there is benefit to do so
         listInfo.setSortField("name");
         listInfo.setSortOrder(ListInfo.ASCENDING);
 
@@ -116,13 +149,13 @@ public class ServiceDeskApiReader extends AbstractFrameReader {
         if (resultSize < 0 || currentRow <= resultSize) {
 
             // if there is no data in the current page
-            if (currentPage.size() == 0) {
+            if (currentPage.isEmpty()) {
                 // load the next page of data
                 nextPage(context);
             }
 
             // if we still have no records...assume a premature EOF condition
-            if (currentPage.size() == 0) {
+            if (currentPage.isEmpty()) {
                 if (StringUtil.isNotBlank(context.getErrorMessage())) Log.error(context.getErrorMessage());
                 context.setError("Unexpected end of data: expected " + resultSize + " read in " + currentRow);
 

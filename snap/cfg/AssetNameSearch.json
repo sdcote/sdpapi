@@ -1,0 +1,23 @@
+{
+  "RtwJob":{
+
+    "Vault": { "filename": "[#$sys.app.home#][#$sys.file.separator#]sdp.vault", "password": "[#$env.vault.password#]" },
+
+    "Reader": {
+      "class": "ServiceDeskApiReader",
+      "clientId": "[#Vault.get(AssetAutomation,Username)#]",
+      "clientSecret": "[#Vault.get(AssetAutomation,Password)#]",
+      "clientToken": "[#Vault.get(AssetAutomation,Token)#]",
+      "endpoint": "/assets",
+      "resultField": "assets",
+      "batch": 10,
+      "flatten": true,
+      "searchCriteria": { "field": "name", "condition": "contains", "value": "[#$cmd.arg.1#]" },
+      "fieldsRequired": [ "id","name"]
+    },
+
+    "Writer": { "class": "ConsoleWriter", "format": "json" }
+
+  }
+
+}
