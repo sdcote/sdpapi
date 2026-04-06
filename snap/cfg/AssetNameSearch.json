@@ -16,7 +16,12 @@
       "fieldsRequired": [ "id","name"]
     },
 
-    "Writer": { "class": "ConsoleWriter", "format": "json" }
+    "Writer": { "class": "ConsoleWriter", "format": "json" },
+
+    "Logging": {
+      "StandardError": { "categories": "warn, error, fatal" },
+      "StandardOutput": { "categories": "debug, trace, info, notice", "enabled": false }
+    }
 
   }
 

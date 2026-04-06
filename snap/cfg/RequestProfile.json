@@ -30,9 +30,9 @@
     "Writer": { "class": "ConsoleWriter", "format": "json" },
 
     "Logging": {
-      "ConsoleAppender": { "target": "STDERR", "categories": "error, fatal, warn" },
-      "ConsoleAppender": { "target": "STDOUT", "categories": "info, notice, debug" },
-      "FileAppender": {  "target": "debug.log", "categories": "debug, trace" }
+      "StandardError": { "categories": "warn, error, fatal" },
+      "StandardOutput": { "categories": "debug, trace, info, notice", "enabled": false },
+      "FileAppender": {  "target": "debug.log", "categories": "debug, trace", "enabled": false }
     }
 
   }
