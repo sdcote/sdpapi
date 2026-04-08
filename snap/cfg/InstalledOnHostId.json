@@ -12,8 +12,8 @@
       "resultField": "software_installations",
       "batch": 100,
       "flatten": true,
-      "searchCriteria": { "field": "workstation.id", "condition": "is", "value": "[#$cmd.arg.1#]" },
-      "searchCriteria2": { "field": "workstation.id", "condition": "is", "value": "208564000000477113" },
+      "searchCriteria1": { "field": "workstation.id", "condition": "is", "value": "[#$cmd.arg.1#]" },
+      "searchCriteria": { "field": "workstation.id", "condition": "is", "value": "208564000007322121" },
       "fieldsRequired1": ["added_by", "created_time.display_value", "created_time.value", "file_size", "id", "installed_on.display_value", "installed_on.value", "location", "product_id", "product_key", "software.id", "software.is_parent_suite", "software.manufacturer.id", "software.name", "software_category.id", "software_category.name", "software_license", "software_type.id", "software_type.name", "suite_installation", "version", "workstation.id", "workstation.name", "workstation.product.id", "workstation.product_type.id", "workstation.site.id"]
     },
 
