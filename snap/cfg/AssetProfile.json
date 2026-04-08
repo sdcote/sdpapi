@@ -13,9 +13,8 @@
       "clientToken": "[#Vault.get(AssetAutomation,Token)#]",
       "endpoint": "/assets",
       "resultField": "assets",
-      "batch": 10,
-      "flatten": false,
-      "limit": 10
+      "batch": 100,
+      "flatten": true
     },
 
     "Filter": {

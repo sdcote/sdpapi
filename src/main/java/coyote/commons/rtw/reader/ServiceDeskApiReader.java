@@ -248,7 +248,9 @@ public class ServiceDeskApiReader extends AbstractFrameReader {
      * @return the endpoint path to add to the request URI to make our call
      */
     private String getEndPoint() {
-        return configuration.getString(ConfigTag.ENDPOINT);
+        String retval = configuration.getString(ConfigTag.ENDPOINT);
+        retval = Template.preProcess(retval, getContext().getSymbols());
+        return retval;
     }
 
 

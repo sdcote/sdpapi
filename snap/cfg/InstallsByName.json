@@ -1,0 +1,29 @@
+{
+  "RtwJob":{
+
+    "Vault": { "filename": "[#$sys.app.home#][#$sys.file.separator#]sdp.vault", "password": "[#$env.vault.password#]" },
+
+    "Reader": {
+      "class": "ServiceDeskApiReader",
+      "clientId": "[#Vault.get(AssetAutomation,Username)#]",
+      "clientSecret": "[#Vault.get(AssetAutomation,Password)#]",
+      "clientToken": "[#Vault.get(AssetAutomation,Token)#]",
+      "endpoint": "/software_installations",
+      "resultField": "software_installations",
+      "batch": 100,
+      "flatten": true,
+      "searchCriteria": { "field": "software.name", "condition": "contains", "value": "[#$cmd.arg.1#]" },
+      "searchCriteria2": { "field": "software.name", "condition": "contains", "value": "WinMerge" }
+    },
+
+    "Writer": { "class": "ConsoleWriter", "format": "json" },
+    "Writer": { "class": "CsvWriter", "target": "installs_by_name.csv", "header": true },
+
+    "Logging": {
+      "StandardError": { "categories": "warn, error, fatal" },
+      "StandardOutput": { "categories": "debug, trace, info, notice", "enabled": false }
+    }
+
+  }
+
+}

@@ -208,7 +208,7 @@ public class SDP {
 
                 // Debug messages
                 if (Log.isLogging(Log.DEBUG_EVENTS)) {
-                    Log.debug(String.format("Request:%n   %s%nResponse:%n    %s", request.toString(), status));
+                    Log.debug(String.format("Request:%n            %s%n   decoded: %s%nResponse:%n    %s", request.toString(), UriUtil.decodeString(generateUri(endpoint,listInfo).toString()), status));
                     if ((status >= 200) && (status < 300)) {
                         Log.debug(String.format("Success - %s", status));
                     } else if ((status >= 300) && (status < 400)) {
@@ -223,6 +223,10 @@ public class SDP {
                 // Status of a 301 or a 302, look for a Location: header in the response and use that URL
                 if (status >= 300 && status < 400) {
                     apiResponse.setLink(httpResponse.headers().firstValue("Location").toString());
+                }
+
+                if( Log.isLogging(Log.DEBUG_EVENTS) && status >= 400 ) {
+                    Log.debug(String.format("Error Body: %s", httpResponse.body()));
                 }
 
                 if (status == 200) {

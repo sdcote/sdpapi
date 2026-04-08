@@ -42,7 +42,7 @@ There is additional data in the response that is not accessible to the current r
   }
 }
 ```
-It may be advantageous to redesign the web service calls to return this information.
+It may be beneficial to redesign the web service calls to return this information.
 
 **Update:** The `ApiResponse` class makes this data available if the `AssetModule.callApi()` method is called.
 
