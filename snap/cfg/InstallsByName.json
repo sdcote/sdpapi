@@ -13,7 +13,8 @@
       "batch": 100,
       "flatten": true,
       "searchCriteria": { "field": "software.name", "condition": "contains", "value": "[#$cmd.arg.1#]" },
-      "searchCriteria2": { "field": "software.name", "condition": "contains", "value": "WinMerge" }
+      "searchCriteria2": { "field": "software.name", "condition": "contains", "value": "WinMerge" },
+      "fieldsRequired": [ "software.name", "software.id","workstation.name","workstation.id", "location"]
     },
 
     "Writer": { "class": "ConsoleWriter", "format": "json" },

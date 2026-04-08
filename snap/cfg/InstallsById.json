@@ -13,7 +13,8 @@
       "batch": 100,
       "flatten": true,
       "searchCriteria": { "field": "software.id", "condition": "contains", "value": "[#$cmd.arg.1#]" },
-      "searchCriteria2": { "field": "software.id", "condition": "contains", "value": "208564000020836309" }
+      "searchCriteria2": { "field": "software.id", "condition": "contains", "value": "208564000020836309" },
+      "fieldsRequired": [ "software.name", "software.id","workstation.name","workstation.id", "location"]
     },
 
     "Writer": { "class": "ConsoleWriter", "format": "json" },
