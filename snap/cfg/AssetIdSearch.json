@@ -8,17 +8,16 @@
       "clientId": "[#Vault.get(AssetAutomation,Username)#]",
       "clientSecret": "[#Vault.get(AssetAutomation,Password)#]",
       "clientToken": "[#Vault.get(AssetAutomation,Token)#]",
-      "endpoint": "/software_installations",
-      "resultField": "software_installations",
-      "batch": 100,
+      "endpoint": "/assets",
+      "resultField": "assets",
+      "batch": 10,
       "flatten": true,
-      "searchCriteria": { "field": "software.name", "condition": "contains", "value": "[#$cmd.arg.1#]" },
-      "searchCriteria2": { "field": "software.name", "condition": "contains", "value": "WinMerge" },
-      "fieldsRequired": [ "software.name", "software.id", "workstation.name", "workstation.id", "location"]
+      "searchCriteria1": { "field": "id", "condition": "contains", "value": "[#$cmd.arg.1#]" },
+      "searchCriteria": { "field": "id", "condition": "contains", "value": "208564000018058097" },
+      "fieldsRequired1": [ "id","name"]
     },
 
     "Writer": { "class": "ConsoleWriter", "format": "json" },
-    "Writer": { "class": "CsvWriter", "target": "installs_by_name.csv", "header": true },
 
     "Logging": {
       "StandardError": { "categories": "warn, error, fatal" },
