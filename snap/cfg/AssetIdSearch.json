@@ -14,7 +14,8 @@
       "flatten": true,
       "searchCriteria1": { "field": "id", "condition": "contains", "value": "[#$cmd.arg.1#]" },
       "searchCriteria": { "field": "id", "condition": "contains", "value": "208564000018058097" },
-      "fieldsRequired1": [ "id","name"]
+      "fieldsRequired1": [ "id","name"],
+      "fieldsRequiredALL": ["acquisition_date","asset_tag","barcode","created_by","created_time","credential","current_cost","department","device_type","discovered_serial_number","expiry_date","id","ip_address","is_loanable","is_loaned","is_swscan_needed","last_updated_by","last_updated_time","loan_end","location","mac_address","module","name","probe","product","product_type","purchase_cost","purchase_order","serial_number","site","state","suggested_owner","used_by_asset","user","vendor","warranty_expiry"]
     },
 
     "Writer": { "class": "ConsoleWriter", "format": "json" },

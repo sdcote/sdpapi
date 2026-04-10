@@ -1,0 +1,30 @@
+{
+  "RtwJob":{
+
+    "Vault": { "filename": "[#$sys.app.home#][#$sys.file.separator#]sdp.vault", "password": "[#$env.vault.password#]" },
+
+    "Reader": {
+      "class": "ServiceDeskApiReader",
+      "clientId": "[#Vault.get(AssetAutomation,Username)#]",
+      "clientSecret": "[#Vault.get(AssetAutomation,Password)#]",
+      "clientToken": "[#Vault.get(AssetAutomation,Token)#]",
+      "endpoint": "/assets",
+      "resultField": "assets",
+      "batch": 10,
+      "flatten": true,
+      "searchCriteria1": { "field": "ip_address", "condition": "contains", "value": "[#$cmd.arg.1#]" },
+      "searchCriteria": { "field": "ip_address", "condition": "contains", "value": "10.251.210." },
+      "fieldsRequired": [ "id","name","service_tag","ip_address","product_name"],
+      "fieldsRequiredALL": ["acquisition_date","asset_tag","barcode","created_by","created_time","credential","current_cost","department","device_type","discovered_serial_number","expiry_date","id","ip_address","is_loanable","is_loaned","is_swscan_needed","last_updated_by","last_updated_time","loan_end","location","mac_address","module","name","probe","product","product_type","purchase_cost","purchase_order","serial_number","site","state","suggested_owner","used_by_asset","user","vendor","warranty_expiry"]
+    },
+
+    "Writer": { "class": "ConsoleWriter", "format": "json" },
+
+    "Logging": {
+      "StandardError": { "categories": "warn, error, fatal" },
+      "StandardOutput": { "categories": "debug, trace, info, notice", "enabled": false }
+    }
+
+  }
+
+}
