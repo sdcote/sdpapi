@@ -175,25 +175,58 @@ public class SDP {
 
 
 
-    public static ApiResponse callApi(ClientCredentials credentials,String endpoint, ListInfo listInfo,String resultField) {
+    public static ApiResponse callApi(ClientCredentials credentials, String endpoint, ListInfo listInfo, String resultField) {
+        return callApi(credentials, endpoint, "GET", listInfo, null, resultField);
+    }
+
+
+    /**
+     * Call the ServiceDesk API.
+     *
+     * @param credentials the client credentials to use for the API call.
+     * @param endpoint    the endpoint to call.
+     * @param method      the HTTP method to use (e.g., "GET", "PUT", "POST").
+     * @param listInfo    the list information for the request (optional).
+     * @param body        the request body (optional).
+     * @param resultField the field in the response containing the results.
+     * @return the API response.
+     */
+    public static ApiResponse callApi(ClientCredentials credentials, String endpoint, String method, ListInfo listInfo, String body, String resultField) {
         ApiResponse apiResponse = null;
 
         // Get the access token for our web service calls.
         String accessToken = SDP.getAccessToken(credentials);
-        Log.debug(String.format("AssetModule listAssets token: %s", accessToken));
+        Log.debug(String.format("AssetModule token: %s", accessToken));
 
         if (StringUtil.isNotBlank(accessToken)) {
             HttpClient client = HttpClient.newBuilder()
                     .connectTimeout(Duration.ofSeconds(10))
                     .build();
 
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(generateUri(endpoint,listInfo))
+            HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
                     .header("Authorization", "Zoho-oauthtoken " + accessToken)
-                    .header("Accept", "application/vnd.manageengine.sdp.v3+json")
-                    .GET()
-                    .build();
+                    .header("Accept", "application/vnd.manageengine.sdp.v3+json");
 
+            if ("PUT".equalsIgnoreCase(method)) {
+                requestBuilder.uri(URI.create(SDP.getServiceUrl() + endpoint));
+                if (body != null) {
+                    requestBuilder.PUT(HttpRequest.BodyPublishers.ofString(body));
+                } else {
+                    requestBuilder.PUT(HttpRequest.BodyPublishers.noBody());
+                }
+            } else if ("POST".equalsIgnoreCase(method)) {
+                requestBuilder.uri(URI.create(SDP.getServiceUrl() + endpoint));
+                if (body != null) {
+                    requestBuilder.POST(HttpRequest.BodyPublishers.ofString(body));
+                } else {
+                    requestBuilder.POST(HttpRequest.BodyPublishers.noBody());
+                }
+            } else {
+                requestBuilder.uri(generateUri(endpoint, listInfo));
+                requestBuilder.GET();
+            }
+
+            HttpRequest request = requestBuilder.build();
             apiResponse = new ApiResponse(request);
 
             try {
@@ -208,7 +241,7 @@ public class SDP {
 
                 // Debug messages
                 if (Log.isLogging(Log.DEBUG_EVENTS)) {
-                    Log.debug(String.format("Request:%n            %s%n   decoded: %s%nResponse:%n    %s", request.toString(), UriUtil.decodeString(generateUri(endpoint,listInfo).toString()), status));
+                    Log.debug(String.format("Request:%n            %s%n   Body: %s%nResponse:%n    %s", request.toString(), body, status));
                     if ((status >= 200) && (status < 300)) {
                         Log.debug(String.format("Success - %s", status));
                     } else if ((status >= 300) && (status < 400)) {
@@ -222,23 +255,25 @@ public class SDP {
 
                 // Status of a 301 or a 302, look for a Location: header in the response and use that URL
                 if (status >= 300 && status < 400) {
-                    apiResponse.setLink(httpResponse.headers().firstValue("Location").toString());
+                    if (httpResponse.headers().firstValue("Location").isPresent()) {
+                        apiResponse.setLink(httpResponse.headers().firstValue("Location").get());
+                    }
                 }
 
-                if( Log.isLogging(Log.DEBUG_EVENTS) && status >= 400 ) {
+                if (Log.isLogging(Log.DEBUG_EVENTS) && status >= 400) {
                     Log.debug(String.format("Error Body: %s", httpResponse.body()));
                 }
 
-                if (status == 200) {
-                    String body = httpResponse.body();
+                if (status == 200 || status == 201) {
+                    String responseBody = httpResponse.body();
 
-                    Log.debug(String.format("Marshaling response body of '%s%s", body.substring(0, Math.min(body.length(), 500)), body.length() <= 500 ? "'" : " ...'"));
+                    Log.debug(String.format("Marshaling response body of '%s%s", responseBody.substring(0, Math.min(responseBody.length(), 500)), responseBody.length() <= 500 ? "'" : " ...'"));
 
                     // Parse the body into frames
                     List<DataFrame> frames = null;
                     apiResponse.parseStart();
                     try {
-                        frames = JSONMarshaler.marshal(body);
+                        frames = JSONMarshaler.marshal(responseBody);
                     } catch (Exception e) {
                         Log.fatal("Marshaling error.", e);
                     } finally {
@@ -253,29 +288,29 @@ public class SDP {
                         }
                         final DataFrame responseFrame = frames.get(0);
 
-                        final DataFrame results = (DataFrame) responseFrame.getObject(resultField);
-                        apiResponse.setResponseFrame( (DataFrame) responseFrame.getObject(RESPONSE_STATUS_FIELD));
-                        apiResponse.setListInfoFrame( (DataFrame) responseFrame.getObject(LISTINFO_FIELD));
+                        apiResponse.setResponseFrame((DataFrame) responseFrame.getObject(RESPONSE_STATUS_FIELD));
+                        apiResponse.setListInfoFrame((DataFrame) responseFrame.getObject(LISTINFO_FIELD));
 
-                        if (results != null) {
-                            // Multiple results come as an array, single results are their own frame
-                            if (results.isArray()) {
-                                for (final DataField field : results.getFields()) {
-                                    if (field.isFrame()) {
-                                        apiResponse.add((DataFrame) field.getObjectValue());
-                                    } else {
-                                        Log.warn(String.format("Malformed response: array of records contained a %s field: %s ", field.getTypeName(), field));
+                        if (StringUtil.isNotBlank(resultField)) {
+                            final DataFrame results = (DataFrame) responseFrame.getObject(resultField);
+                            if (results != null) {
+                                // Multiple results come as an array, single results are their own frame
+                                if (results.isArray()) {
+                                    for (final DataField field : results.getFields()) {
+                                        if (field.isFrame()) {
+                                            apiResponse.add((DataFrame) field.getObjectValue());
+                                        } else {
+                                            Log.warn(String.format("Malformed response: array of records contained a %s field: %s ", field.getTypeName(), field));
+                                        }
                                     }
+                                } else {
+                                    // This is a single result, add it to the return value
+                                    apiResponse.add(results);
                                 }
                             } else {
-                                // This is a single result, add it to the return value
-                                apiResponse.add(results);
+                                Log.debug("RESPONSE: NO RESPONSE DATA RETURNED for field: " + resultField);
                             }
-
-                        } else {
-                            Log.debug("RESPONSE: NO RESPONSE DATA RETURNED");
                         }
-
                     } else {
                         Log.debug("There were no valid frames in the response body");
                     }
@@ -297,6 +332,58 @@ public class SDP {
         return apiResponse;
     }
 
+
+
+    /**
+     * Retrieve a workstation by its name.
+     *
+     * @param credentials the client credentials to use for the API call.
+     * @param name        the name of the workstation to retrieve.
+     * @return the Workstation object if found, null otherwise.
+     */
+    public static Workstation getWorkstationByName(ClientCredentials credentials, String name) {
+        Workstation retval = null;
+        SearchCriteria criteria = new SearchCriteria("name", "is", name);
+        ListInfo listInfo = new ListInfo();
+        listInfo.setSearchCriteria(criteria);
+
+        ApiResponse response = callApi(credentials, "/workstations", listInfo, "workstations");
+
+        if (response != null && response.isSuccessful() && response.getResultSize() > 0) {
+            retval = new Workstation(response.getFrame(0));
+        }
+
+        return retval;
+    }
+
+
+    /**
+     * Update the state of a workstation.
+     *
+     * @param workstation the workstation to update.
+     * @param stateName   the name of the state to set (e.g., "Expired").
+     * @param credentials the client credentials to use for the API call.
+     * @return the updated workstation if successful, null otherwise.
+     */
+    public static Workstation updateWorkstationState(Workstation workstation, String stateName, ClientCredentials credentials) {
+        Workstation retval = null;
+        if (workstation != null && workstation.getId() != null && StringUtil.isNotBlank(stateName)) {
+            DataFrame state = new DataFrame();
+            state.add("name", stateName);
+            DataFrame wsUpdate = new DataFrame();
+            wsUpdate.add("state", state);
+            DataFrame payload = new DataFrame();
+            payload.add("workstation", wsUpdate);
+
+            String body = "input_data=" + UriUtil.encodeString(JSONMarshaler.marshal(payload));
+            ApiResponse response = callApi(credentials, "/workstation/" + workstation.getId(), "PUT", null, body, "workstation");
+
+            if (response != null && response.isSuccessful() && response.getResultSize() > 0) {
+                retval = new Workstation(response.getFrame(0));
+            }
+        }
+        return retval;
+    }
 
 
     /**

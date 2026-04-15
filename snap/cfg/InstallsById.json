@@ -14,7 +14,8 @@
       "flatten": true,
       "searchCriteria": { "field": "software.id", "condition": "contains", "value": "[#$cmd.arg.1#]" },
       "searchCriteria2": { "field": "software.id", "condition": "contains", "value": "208564000020836309" },
-      "fieldsRequired": [ "software.name", "software.id", "workstation.name", "workstation.id", "location"]
+      "fieldsRequired": [ "software.name", "software.id", "workstation.name", "workstation.id", "location"],
+      "fieldsRequiredALL": ["architecture","asset.asset_tag","asset.department.name","asset.id","asset.name","asset.product.name","asset.product_type.name","asset.service_tag","asset.site.name","asset.state.name","id","installation_date","installation_path","is_parent_suite","last_usage_time","service_pack","software.category.name","software.id","software.is_parent_suite","software.manufacturer.name","software.name","software.type.name","usage_status","version"]
     },
 
     "Writer": { "class": "ConsoleWriter", "format": "json" },

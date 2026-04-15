@@ -14,7 +14,8 @@
       "flatten": true,
       "searchCriteria1": { "field": "workstation.name", "condition": "contains", "value": "[#$cmd.arg.1#]" },
       "searchCriteria": { "field": "workstation.name", "condition": "contains", "value": "WDMONT-9WTY8C3" },
-      "fieldsRequired1": ["added_by", "created_time.display_value", "created_time.value", "file_size", "id", "installed_on.display_value", "installed_on.value", "location", "product_id", "product_key", "software.id", "software.is_parent_suite", "software.manufacturer.id", "software.name", "software_category.id", "software_category.name", "software_license", "software_type.id", "software_type.name", "suite_installation", "version", "workstation.id", "workstation.name", "workstation.product.id", "workstation.product_type.id", "workstation.site.id"]
+      "fieldsRequired1": ["added_by", "created_time.display_value", "created_time.value", "file_size", "id", "installed_on.display_value", "installed_on.value", "location", "product_id", "product_key", "software.id", "software.is_parent_suite", "software.manufacturer.id", "software.name", "software_category.id", "software_category.name", "software_license", "software_type.id", "software_type.name", "suite_installation", "version", "workstation.id", "workstation.name", "workstation.product.id", "workstation.product_type.id", "workstation.site.id"],
+      "fieldsRequiredALL": ["architecture","asset.asset_tag","asset.department.name","asset.id","asset.name","asset.product.name","asset.product_type.name","asset.service_tag","asset.site.name","asset.state.name","id","installation_date","installation_path","is_parent_suite","last_usage_time","service_pack","software.category.name","software.id","software.is_parent_suite","software.manufacturer.name","software.name","software.type.name","usage_status","version"]
     },
 
     "Writer": { "class": "ConsoleWriter", "format": "json" },
