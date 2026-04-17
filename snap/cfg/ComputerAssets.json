@@ -1,0 +1,27 @@
+{
+  "RtwJob":{
+
+    "Vault": { "filename": "[#$sys.app.home#][#$sys.file.separator#]sdp.vault", "password": "[#$env.vault.password#]" },
+
+    "Reader": {
+      "class": "ServiceDeskApiReader",
+      "clientId": "[#Vault.get(AssetAutomation,Username)#]",
+      "clientSecret": "[#Vault.get(AssetAutomation,Password)#]",
+      "clientToken": "[#Vault.get(AssetAutomation,Token)#]",
+      "endpoint": "/asset_computers",
+      "resultField": "asset_computers",
+      "batch": 100,
+      "flatten": true
+    },
+
+    "Writer": { "class": "ConsoleWriter" },
+    "Writer": { "class": "CsvWriter", "target": "ComputerAssets.csv", "header": true },
+
+    "Logging": {
+      "StandardError": { "categories": "warn, error, fatal" },
+      "StandardOutput": { "categories": "debug, trace, info, notice", "enabled": false }
+    }
+
+  }
+
+}

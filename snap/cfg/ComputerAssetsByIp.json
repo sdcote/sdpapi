@@ -1,0 +1,29 @@
+{
+  "RtwJob":{
+
+    "Vault": { "filename": "[#$sys.app.home#][#$sys.file.separator#]sdp.vault", "password": "[#$env.vault.password#]" },
+
+    "Reader": {
+      "class": "ServiceDeskApiReader",
+      "clientId": "[#Vault.get(AssetAutomation,Username)#]",
+      "clientSecret": "[#Vault.get(AssetAutomation,Password)#]",
+      "clientToken": "[#Vault.get(AssetAutomation,Token)#]",
+      "endpoint": "/asset_computers",
+      "resultField": "asset_computers",
+      "batch": 100,
+      "flatten": true,
+      "searchCriteria": { "field": "ip_address", "condition": "contains", "value": "192.168." },
+      "fieldsRequired": [ "id","name","ip_address"]
+    },
+
+    "Writer": { "class": "ConsoleWriter" },
+    "Writer": { "class": "CsvWriter", "target": "ComputerAssetsByIp.csv", "header": true },
+
+    "Logging": {
+      "StandardError": { "categories": "warn, error, fatal" },
+      "StandardOutput": { "categories": "debug, trace, info, notice", "enabled": false }
+    }
+
+  }
+
+}
